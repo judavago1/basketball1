@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 
 const SCREEN_WIDTH = window.innerWidth;
 const SCREEN_HEIGHT = window.innerHeight;
@@ -18,7 +18,6 @@ export default function App() {
   const gravity = 0.7;
   const maxFrames = 300;
 
-  // Canasta fija
   const hoop = {
     x: SCREEN_WIDTH / 2.15 - 50,
     y: 150,
@@ -26,16 +25,29 @@ export default function App() {
     height: 60,
   };
 
-  // Manejo de mouse/touch
-  const handleMouseDown = (e) => {
-    if (isMoving.current) return;
-    startTouch.current = { x: e.clientX, y: e.clientY };
+  // 🔥 Obtener coordenadas de mouse o touch
+  const getCoords = (e) => {
+    if (e.touches && e.touches.length > 0) {
+      return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    } else {
+      return { x: e.clientX, y: e.clientY };
+    }
   };
 
-  const handleMouseUp = (e) => {
+  // Inicio
+  const handleStart = (e) => {
     if (isMoving.current) return;
-    const dx = e.clientX - startTouch.current.x;
-    const dy = e.clientY - startTouch.current.y;
+    const pos = getCoords(e);
+    startTouch.current = { x: pos.x, y: pos.y };
+  };
+
+  // Fin
+  const handleEnd = (e) => {
+    if (isMoving.current) return;
+    const pos = getCoords(e);
+
+    const dx = pos.x - startTouch.current.x;
+    const dy = pos.y - startTouch.current.y;
 
     velocity.current = { x: dx * 0.2, y: dy * 0.2 };
     isMoving.current = true;
@@ -59,14 +71,12 @@ export default function App() {
       y: velocity.current.y + gravity,
     };
 
-    // Verificar colisión
     if (checkCollision()) {
       setScore((prev) => prev + 1);
       resetBall(false);
       return;
     }
 
-    // Fuera de límites
     if (
       ballPos.y > SCREEN_HEIGHT ||
       ballPos.x < -100 ||
@@ -111,8 +121,10 @@ export default function App() {
         backgroundSize: "cover",
         position: "relative",
       }}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
+      onMouseDown={handleStart}
+      onMouseUp={handleEnd}
+      onTouchStart={handleStart}  // ✅ soporte móvil
+      onTouchEnd={handleEnd}      // ✅ soporte móvil
     >
       <h1
         style={{
@@ -140,19 +152,7 @@ export default function App() {
           borderBottomRightRadius: "60px",
           backgroundColor: "rgba(255,165,0,0.1)",
         }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            width: "100%",
-            height: "30px",
-            borderBottomLeftRadius: "60px",
-            borderBottomRightRadius: "60px",
-            backgroundColor: "rgba(255,255,255,0.7)",
-          }}
-        />
-      </div>
+      />
 
       {/* Pelota */}
       <div
